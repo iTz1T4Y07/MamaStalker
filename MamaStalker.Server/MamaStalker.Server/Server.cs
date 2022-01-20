@@ -32,7 +32,7 @@ namespace MamaStalker.Server
 
             Task Timer = Task.Delay(_refreshInterval);
             await Timer.ContinueWith(task => SendDataToClients(GetScreenshotBytes())).ContinueWith(task => Timer);
-            await Task.Delay(10000);
+            await Task.Delay(100000);
 
         }
 
@@ -61,7 +61,7 @@ namespace MamaStalker.Server
                         messageBuffer[i + sizeof(int)] = data[i];
                     }
 
-                    await stream.WriteAsync(data, 0, data.Length);
+                    await stream.WriteAsync(messageBuffer, 0, messageBuffer.Length);
                 }
             }
         }
