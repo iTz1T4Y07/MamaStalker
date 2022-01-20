@@ -33,9 +33,17 @@ namespace MamaStalker.Client
         {
             NetworkStream stream = _client.GetStream();
             if (!stream.CanRead) return new byte[] { 0 };
-            byte[] receivedData = new byte[_client.ReceiveBufferSize];
-            await stream.ReadAsync(receivedData, 0, receivedData.Length);
-            return receivedData.Where(byteValue => byteValue != 0).ToArray();
+            byte[] dataLength = new byte[sizeof(int)];
+            int recv = await stream.ReadAsync(dataLength, 0, dataLength.Length);
+            if (recv == sizeof(int))
+            {
+                int messageLen = BitConverter.ToInt32(dataLength, 0);
+                byte[] receivedData = new byte[messageLen];
+                recv = await stream.ReadAsync(receivedData, 0, receivedData.Length);
+                return receivedData;
+            }
+            return new byte[] { 0 };
+            
         }
 
         private bool SaveBitmap(byte[] data)
