@@ -30,9 +30,17 @@ namespace MamaStalker.Server
             _listener.Start(50);
             _listener.BeginAcceptTcpClient(new AsyncCallback(AcceptNewConnection), _listener);
 
-            Task Timer = Task.Delay(_refreshInterval);
-            await Timer.ContinueWith(task => SendDataToClients(GetScreenshotBytes())).ContinueWith(task => Timer);
+            await CircularOperation();
 
+        }
+
+        private async Task CircularOperation()
+        {
+            while (_listener.Server.IsBound)
+            {
+                Task Timer = Task.Delay(_refreshInterval);
+                await Timer.ContinueWith(task => SendDataToClients(GetScreenshotBytes()));
+            }
         }
 
         private void AcceptNewConnection(IAsyncResult asyncResult)
