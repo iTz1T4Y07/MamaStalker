@@ -60,8 +60,9 @@ namespace MamaStalker.Client
                 // Change to logger
                 return false;
             }
-            
-            bitmap.Save(DateTime.Now.ToString("F"), ImageFormat.Jpeg);
+
+            string fileName = DateTime.Now.ToString("dd.MM.yyyy hh..mm..ss");
+            bitmap.Save($"{fileName}.jpg", ImageFormat.Jpeg);
             return true;
 
         }
