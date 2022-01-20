@@ -36,5 +36,17 @@ namespace MamaStalker.Server
             TcpClient newClient = listener.EndAcceptTcpClient(asyncResult);
             _clients.Add(newClient);            
         }
+
+        private void SendDataToClients(byte[] data)
+        {
+            foreach (TcpClient client in _clients)
+            {
+                NetworkStream stream = client.GetStream();
+                if (stream.CanWrite)
+                {
+                    stream.WriteAsync(data, 0, data.Length);
+                }
+            }
+        }
     }
 }
