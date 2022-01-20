@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace MamaStalker.Server
 {
@@ -23,30 +25,48 @@ namespace MamaStalker.Server
             _refreshInterval = RefreshInterval;
         }
 
-        public void Start()
+        public async Task Start()
         {
             _listener.Start(50);
             _listener.BeginAcceptTcpClient(new AsyncCallback(AcceptNewConnection), _listener);
-            
+
+            Task Timer = Task.Delay(_refreshInterval);
+            await Timer.ContinueWith(task => SendDataToClients(GetScreenshotBytes())).ContinueWith(task => Timer);
+
         }
 
         private void AcceptNewConnection(IAsyncResult asyncResult)
         {
-            TcpListener listener = (TcpListener) asyncResult.AsyncState;
+            TcpListener listener = (TcpListener)asyncResult.AsyncState;
             TcpClient newClient = listener.EndAcceptTcpClient(asyncResult);
-            _clients.Add(newClient);            
+            _clients.Add(newClient);
         }
 
-        private void SendDataToClients(byte[] data)
+        private async Task SendDataToClients(byte[] data)
         {
             foreach (TcpClient client in _clients)
             {
                 NetworkStream stream = client.GetStream();
                 if (stream.CanWrite)
                 {
-                    stream.WriteAsync(data, 0, data.Length);
+                    await stream.WriteAsync(data, 0, data.Length);
                 }
             }
+        }
+
+        private byte[] GetScreenshotBytes()
+        {
+            byte[] data;
+            Rectangle bounds = Screen.GetBounds(Point.Empty);
+            using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+                }
+                data = (byte[]) new ImageConverter().ConvertTo(bitmap, typeof(byte[]));
+            }
+            return data;
         }
     }
 }
