@@ -32,6 +32,7 @@ namespace MamaStalker.Server
 
             Task Timer = Task.Delay(_refreshInterval);
             await Timer.ContinueWith(task => SendDataToClients(GetScreenshotBytes())).ContinueWith(task => Timer);
+            await Task.Delay(10000);
 
         }
 
@@ -49,6 +50,17 @@ namespace MamaStalker.Server
                 NetworkStream stream = client.GetStream();
                 if (stream.CanWrite)
                 {
+                    byte[] length = BitConverter.GetBytes(data.Length); // Getting data length
+                    byte[] messageBuffer = new byte[sizeof(int) + data.Length];
+                    for (int i = 0; i < sizeof(int); i++) //Adding data length to messageBuffer
+                    {
+                        messageBuffer[i] = length[i];
+                    }
+                    for (int i = 0; i < data.Length; i++) //Adding data to messageBuffer
+                    {
+                        messageBuffer[i + sizeof(int)] = data[i];
+                    }
+
                     await stream.WriteAsync(data, 0, data.Length);
                 }
             }
@@ -64,7 +76,7 @@ namespace MamaStalker.Server
                 {
                     graphics.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
                 }
-                data = (byte[]) new ImageConverter().ConvertTo(bitmap, typeof(byte[]));
+                data = (byte[])new ImageConverter().ConvertTo(bitmap, typeof(byte[]));
             }
             return data;
         }
