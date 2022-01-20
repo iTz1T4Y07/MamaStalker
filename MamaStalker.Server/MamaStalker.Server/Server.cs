@@ -28,7 +28,14 @@ namespace MamaStalker.Server
         public async Task Start()
         {
             _listener.Start(50);
-            _listener.BeginAcceptTcpClient(new AsyncCallback(AcceptNewConnection), _listener);
+
+            Task receiveConnections = Task.Run(() =>
+            {               
+                while (_listener.Server.IsBound)
+                {
+                    _listener.BeginAcceptTcpClient(new AsyncCallback(AcceptNewConnection), _listener);
+                }
+            });
 
             await CircularOperation();
 
@@ -45,9 +52,9 @@ namespace MamaStalker.Server
 
         private void AcceptNewConnection(IAsyncResult asyncResult)
         {
-            TcpListener listener = (TcpListener)asyncResult.AsyncState;
+            TcpListener listener = (TcpListener)asyncResult.AsyncState;            
             TcpClient newClient = listener.EndAcceptTcpClient(asyncResult);
-            _clients.Add(newClient);
+            _clients.Add(newClient);            
         }
 
         private async Task SendDataToClients(byte[] data)
