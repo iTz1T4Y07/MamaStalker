@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -23,7 +25,7 @@ namespace MamaStalker.Client
             while (_client.Connected)
             {
                 byte[] receivedData = await GetData();
-
+                Console.WriteLine($"Tried to save screenshot. result: [{SaveBitmap(receivedData)}]");
             }
         }
 
@@ -34,6 +36,26 @@ namespace MamaStalker.Client
             byte[] receivedData = new byte[_client.ReceiveBufferSize];
             await stream.ReadAsync(receivedData, 0, receivedData.Length);
             return receivedData.Where(byteValue => byteValue != 0).ToArray();
+        }
+
+        private bool SaveBitmap(byte[] data)
+        {
+            ImageConverter converter = new ImageConverter();
+            Bitmap bitmap;
+            try
+            {
+                bitmap = (Bitmap) converter.ConvertFrom(data);
+            }
+            catch (NotSupportedException e)
+            {
+                Console.WriteLine($"Failed to convert received data to bitmap. {e}");
+                // Change to logger
+                return false;
+            }
+            
+            bitmap.Save(DateTime.Now.ToString("F"), ImageFormat.Jpeg);
+            return true;
+
         }
     }
 }
